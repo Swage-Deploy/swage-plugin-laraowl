@@ -16,7 +16,7 @@ Connects sites to a LaraOwl monitoring server, which collects their requests, ex
 
 ## Requirements
 
-- Swage `v1.0.0` or later
+- Swage `v1.0.1` or later
 - The `laraowl/client` package in each application you connect
 
 ## Installation

@@ -4,10 +4,11 @@ namespace Swage\LaraOwl;
 
 use App\Models\Server;
 use App\Models\Site;
+use App\Plugins\HasPluginTab;
 use App\Sites\SiteIntegration;
 use Illuminate\Support\Facades\Cache;
 
-class LaraOwlIntegration implements SiteIntegration
+class LaraOwlIntegration implements HasPluginTab, SiteIntegration
 {
     public function id(): string
     {
@@ -17,6 +18,16 @@ class LaraOwlIntegration implements SiteIntegration
     public function settingsComponent(): string
     {
         return 'laraowl.site-settings';
+    }
+
+    public function tabLabel(): string
+    {
+        return __('LaraOwl');
+    }
+
+    public function tabIcon(): string
+    {
+        return 'eye';
     }
 
     /**
