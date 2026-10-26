@@ -84,6 +84,11 @@ describe('once installed', function () {
             ->toContain("sudo -u example sed -i 's#^LARAOWL_SERVER_URL=.*#LARAOWL_SERVER_URL=https://owl.example.net#' \"\$ENV_FILE\"")
             ->toContain("printf '%s\\n' 'LARAOWL_TOKEN=7|AbC.def_ghi' | sudo -u example tee -a \"\$ENV_FILE\" > /dev/null")
             ->not->toMatch('/>>\s*"\$ENV_FILE"/')
+            ->toContain('if ! swage_as_site test -f "$ENV_FILE"; then')
+            ->toContain('[ -n "$(swage_as_site tail -c 1 "$ENV_FILE")" ]')
+            ->toContain("if swage_as_site grep -q '^LARAOWL_TOKEN=' \"\$ENV_FILE\"; then")
+            ->not->toContain('[ ! -f "$ENV_FILE" ]')
+            ->not->toContain('if grep -q')
             ->toContain('config:cache')
             ->toContain('systemctl reload php8.5-fpm');
     });
@@ -201,7 +206,8 @@ describe('once installed', function () {
             ->assertSet('error', 'Install laraowl/client in the application and deploy it before adding LaraOwl.');
 
         expect(LaraOwlSite::for($site))->toBeNull()
-            ->and($shell->lastScript())->toContain("test -f '/home/example/example.com/current/vendor/laraowl/client/composer.json'");
+            ->and($shell->lastScript())->toContain("test -f '/home/example/example.com/current/vendor/laraowl/client/composer.json'")
+            ->and(end($shell->ran)['as'])->toBe('example');
     });
 
     test('laraowl stays disabled when the server cannot be checked', function () {

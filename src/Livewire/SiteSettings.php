@@ -63,7 +63,7 @@ class SiteSettings extends Component
 
         if ($this->installed === null) {
             try {
-                $result = $shell->run($this->site->server, 'test -f '.escapeshellarg(SetLaraOwl::packageManifestPath($this->site)).' && echo installed || echo missing', timeout: 20);
+                $result = $shell->run($this->site->server, 'test -f '.escapeshellarg(SetLaraOwl::packageManifestPath($this->site)).' && echo installed || echo missing', as: $this->site->systemUser(), timeout: 20);
 
                 $this->installed = $result->successful() ? trim($result->output) === 'installed' : null;
             } catch (Throwable) {
