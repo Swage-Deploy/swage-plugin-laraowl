@@ -62,7 +62,7 @@ describe('once installed', function () {
     });
 
     test('adding laraowl writes its server url and token into the site\'s environment', function () {
-        $site = Site::factory()->isolated('example')->create(['domain' => 'example.com']);
+        $site = Site::factory()->systemUser('example')->create(['domain' => 'example.com']);
 
         $settings = laraOwlSettingsWithClient($site);
         $shell = app(RemoteShell::class);
@@ -193,7 +193,7 @@ describe('once installed', function () {
 
     test('laraowl cannot be added until the package is installed', function () {
         $shell = fakeShell()->respondTo('vendor/laraowl/client', new ScriptResult(0, "missing\n"));
-        $site = Site::factory()->isolated('example')->create(['domain' => 'example.com']);
+        $site = Site::factory()->systemUser('example')->create(['domain' => 'example.com']);
 
         laraOwlSettings($site)
             ->call('check')
@@ -271,7 +271,7 @@ describe('once installed', function () {
             $this->markTestSkipped('bash is not available to check script syntax.');
         }
 
-        $site = Site::factory()->isolated('example')->create();
+        $site = Site::factory()->systemUser('example')->create();
 
         $result = Process::input(view('laraowl::scripts.configure', ['site' => $site, 'values' => ['LARAOWL_SERVER_URL' => 'https://owl.example.net', 'LARAOWL_TOKEN' => 'token']])->render())->run('bash -n');
 
