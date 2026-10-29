@@ -109,6 +109,55 @@ describe('once installed', function () {
             ->token->toBe('saved-token');
     });
 
+    test('sample rates are written into the site\'s environment, and blank ones are removed', function () {
+        $site = Site::factory()->systemUser('example')->create();
+
+        $settings = laraOwlSettingsWithClient($site);
+        $shell = app(RemoteShell::class);
+
+        $settings
+            ->set('server_url', 'owl.example.net')
+            ->set('token', 'token')
+            ->set('sample_rates.sample_requests', '0.25')
+            ->set('sample_rates.sample_tasks', ' 1 ')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        expect(LaraOwlSite::for($site))
+            ->sample_requests->toBe(0.25)
+            ->sample_commands->toBeNull()
+            ->sample_exceptions->toBeNull()
+            ->sample_tasks->toBe(1.0);
+
+        expect($shell->lastScript())
+            ->toContain("'LARAOWL_SAMPLE_REQUESTS=0.25'")
+            ->toContain("'LARAOWL_SAMPLE_TASKS=1'")
+            ->toContain("sed -i '/^LARAOWL_SAMPLE_COMMANDS=/d'")
+            ->toContain("sed -i '/^LARAOWL_SAMPLE_EXCEPTIONS=/d'");
+
+        laraOwlSettings($site)
+            ->assertSet('sample_rates.sample_requests', '0.25')
+            ->assertSet('sample_rates.sample_commands', '');
+    });
+
+    test('sample rates are validated', function (string $rate) {
+        $site = Site::factory()->create();
+
+        laraOwlSettingsWithClient($site)
+            ->set('server_url', 'owl.example.net')
+            ->set('token', 'token')
+            ->set('sample_rates.sample_exceptions', $rate)
+            ->call('save')
+            ->assertHasErrors(['sample_rates.sample_exceptions']);
+
+        expect(LaraOwlSite::for($site))->toBeNull();
+    })->with([
+        'above one' => ['1.5'],
+        'below zero' => ['-0.1'],
+        'not a number' => ['half'],
+        'too many decimal places' => ['0.0005'],
+    ]);
+
     test('laraowl settings are validated', function (string $serverUrl, string $token, string $error) {
         $site = Site::factory()->create();
 
@@ -130,15 +179,16 @@ describe('once installed', function () {
     test('removing laraowl deletes its variables from the environment', function () {
         $shell = fakeShell();
         $site = Site::factory()->create();
-        connectLaraOwl($site);
+        connectLaraOwl($site)->update(['sample_requests' => 0.5]);
 
-        laraOwlSettings($site)->call('remove')->assertSet('server_url', '');
+        laraOwlSettings($site)->call('remove')->assertSet('server_url', '')->assertSet('sample_rates.sample_requests', '');
 
         expect(LaraOwlSite::for($site))->toBeNull();
 
         expect($shell->lastScript())
             ->toContain("sed -i '/^LARAOWL_SERVER_URL=/d'")
-            ->toContain("sed -i '/^LARAOWL_TOKEN=/d'");
+            ->toContain("sed -i '/^LARAOWL_TOKEN=/d'")
+            ->toContain("sed -i '/^LARAOWL_SAMPLE_REQUESTS=/d'");
     });
 
     test('settings are not saved when the environment cannot be updated', function () {

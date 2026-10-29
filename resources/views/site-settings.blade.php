@@ -1,5 +1,5 @@
 <div>
-    <x-panel icon="eye" :heading="__('LaraOwl monitoring')" :description="__('Reports requests, exceptions, queries and jobs to your LaraOwl server. The application must require laraowl/client; Swage sets LARAOWL_SERVER_URL and LARAOWL_TOKEN in its .env.')">
+    <x-panel icon="eye" :heading="__('LaraOwl monitoring')" :description="__('Reports requests, exceptions, queries and jobs to your LaraOwl server. The application must require laraowl/client; Swage sets LARAOWL_SERVER_URL, LARAOWL_TOKEN and any sample rates in its .env.')">
         @if ($connection)
             <x-slot:actions>
                 <x-status color="green" :label="__('Reporting')" />
@@ -34,6 +34,18 @@
 
             <flux:input wire:model="server_url" :label="__('Server domain')" placeholder="owl.example.com" class="font-mono" :disabled="$disabled" />
             <flux:input wire:model="token" type="password" viewable :label="__('Project token')" :placeholder="$connection ? __('Saved. Leave blank to keep it.') : ''" class="font-mono" autocomplete="off" :disabled="$disabled" />
+
+            <flux:fieldset>
+                <flux:legend>{{ __('Sample rates') }}</flux:legend>
+                <flux:description>{{ __('The share of each kind of event to report, from 0 to 1, such as 0.1 for one in ten. Leave blank to report all of them.') }}</flux:description>
+
+                <div class="mt-4 grid gap-4 sm:grid-cols-2">
+                    <flux:input wire:model="sample_rates.sample_requests" :label="__('Requests')" placeholder="1.0" class="font-mono" :disabled="$disabled" />
+                    <flux:input wire:model="sample_rates.sample_commands" :label="__('Commands')" placeholder="1.0" class="font-mono" :disabled="$disabled" />
+                    <flux:input wire:model="sample_rates.sample_exceptions" :label="__('Exceptions')" placeholder="1.0" class="font-mono" :disabled="$disabled" />
+                    <flux:input wire:model="sample_rates.sample_tasks" :label="__('Scheduled tasks')" placeholder="1.0" class="font-mono" :disabled="$disabled" />
+                </div>
+            </flux:fieldset>
 
             @if ($error)
                 <flux:callout icon="x-circle" color="red">

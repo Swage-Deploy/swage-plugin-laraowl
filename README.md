@@ -39,7 +39,9 @@ Connects sites to a LaraOwl monitoring server, which collects their requests, ex
 
 3. **Connect the site** on its **Plugins** tab: enter the LaraOwl server's domain, such as `owl.example.com`, and the project token.
 
-Tokens are stored encrypted, never sent back to the browser, and redacted from task output. Leave the token blank when saving to keep the one already saved. **Remove** deletes both variables from the `.env`.
+   Optionally set **sample rates** for requests, commands, exceptions and scheduled tasks: the share of each to report, from 0 to 1, such as `0.1` for one in ten. Swage writes them as `LARAOWL_SAMPLE_REQUESTS`, `LARAOWL_SAMPLE_COMMANDS`, `LARAOWL_SAMPLE_EXCEPTIONS` and `LARAOWL_SAMPLE_TASKS`. A blank rate is removed from the `.env`, so the client reports everything of that kind.
+
+Tokens are stored encrypted, never sent back to the browser, and redacted from task output. Leave the token blank when saving to keep the one already saved. **Remove** deletes all of these variables from the `.env`.
 
 ## Upgrading from Swage's built-in LaraOwl settings
 

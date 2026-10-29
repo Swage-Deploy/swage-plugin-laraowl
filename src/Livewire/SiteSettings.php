@@ -28,6 +28,13 @@ class SiteSettings extends Component
      */
     public string $token = '';
 
+    /**
+     * The share of each kind of event to report, by the columns in SetLaraOwl::SAMPLE_RATES. Blank reports them all.
+     *
+     * @var array<string, string>
+     */
+    public array $sample_rates = [];
+
     public ?string $error = null;
 
     /**
@@ -43,7 +50,10 @@ class SiteSettings extends Component
     {
         $this->authorize('view', $this->site);
 
-        $this->server_url = LaraOwlSite::for($this->site)->server_url ?? '';
+        $connection = LaraOwlSite::for($this->site);
+
+        $this->server_url = $connection->server_url ?? '';
+        $this->sample_rates = collect(SetLaraOwl::SAMPLE_RATES)->map(fn (string $key, string $column) => (string) ($connection?->{$column} ?? ''))->all();
     }
 
     public function render(): View
@@ -105,16 +115,21 @@ class SiteSettings extends Component
 
         $this->server_url = filled($this->server_url) ? SetLaraOwl::normalizeServerUrl($this->server_url) : '';
         $this->token = trim($this->token);
+        $this->sample_rates = collect(SetLaraOwl::SAMPLE_RATES)->map(fn (string $key, string $column) => trim($this->sample_rates[$column] ?? ''))->all();
 
         $validated = $this->validate([
             'server_url' => ['required', 'string', 'max:255', 'regex:'.SetLaraOwl::SERVER_URL_PATTERN],
             'token' => [$savedToken ? 'nullable' : 'required', 'string', 'max:255', 'regex:'.SetLaraOwl::TOKEN_PATTERN],
+            'sample_rates.*' => ['nullable', 'numeric', 'min:0', 'max:1', 'decimal:0,3'],
         ], [
             'server_url.regex' => __('Enter the LaraOwl server\'s domain, such as owl.example.com.'),
             'token.regex' => __('The token can only contain letters, numbers and . _ | : = + / -'),
+            'sample_rates.*' => __('Enter a number from 0 to 1 with up to three decimal places, such as 0.1.'),
         ]);
 
-        $this->apply($setLaraOwl, $validated['server_url'], $validated['token'] ?: $savedToken);
+        $sampleRates = collect($validated['sample_rates'])->map(fn (?string $rate) => filled($rate) ? (float) $rate : null)->all();
+
+        $this->apply($setLaraOwl, $validated['server_url'], $validated['token'] ?: $savedToken, $sampleRates);
     }
 
     /**
@@ -127,14 +142,18 @@ class SiteSettings extends Component
         $this->apply($setLaraOwl, null, null);
 
         $this->server_url = '';
+        $this->sample_rates = array_map(fn () => '', SetLaraOwl::SAMPLE_RATES);
     }
 
-    protected function apply(SetLaraOwl $setLaraOwl, ?string $serverUrl, ?string $token): void
+    /**
+     * @param  array<string, float|null>  $sampleRates
+     */
+    protected function apply(SetLaraOwl $setLaraOwl, ?string $serverUrl, ?string $token, array $sampleRates = []): void
     {
         $this->error = null;
 
         try {
-            $setLaraOwl->handle($this->site, $serverUrl, $token);
+            $setLaraOwl->handle($this->site, $serverUrl, $token, $sampleRates);
         } catch (ScriptFailedException $exception) {
             $this->error = trim($exception->task->output ?? '');
 

@@ -14,8 +14,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int $site_id
  * @property string $server_url
  * @property string $token
+ * @property float|null $sample_requests
+ * @property float|null $sample_commands
+ * @property float|null $sample_exceptions
+ * @property float|null $sample_tasks
  */
-#[Fillable(['site_id', 'server_url', 'token'])]
+#[Fillable(['site_id', 'server_url', 'token', 'sample_requests', 'sample_commands', 'sample_exceptions', 'sample_tasks'])]
 #[Hidden(['token'])]
 class LaraOwlSite extends Model
 {
@@ -30,6 +34,10 @@ class LaraOwlSite extends Model
     {
         return [
             'token' => 'encrypted',
+            'sample_requests' => 'float',
+            'sample_commands' => 'float',
+            'sample_exceptions' => 'float',
+            'sample_tasks' => 'float',
         ];
     }
 
